@@ -51,8 +51,13 @@
 │   ├── release_planner.py       # Оптимизатор состава релиза
 │   ├── pert_cpm.py              # Расчет сетевого графика
 │   └── monte_carlo.py           # Статистический симулятор
-├── data/
-│   └── tasks_data.csv           # Исходные параметры для скриптов
+├── examples/
+|    └── data/
+│       ├── deployments.csv
+│       ├── issues.csv
+│       └── prs.csv
+│   ├── backlog.csv
+│   └── tasks.csv
 └── README.md                    # Информационная карта проекта
 ```
 
