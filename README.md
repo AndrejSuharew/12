@@ -39,26 +39,51 @@
 ## Структура репозитория
 
 ```text
+├── .github/
+│   ├── workflows/
+│   │   └── ci.yml               # Конвейер непрерывной интеграции (lint, test, build)
+│   ├── CODEOWNERS               # Назначение обязательных ревьюеров
+│   └── PULL_REQUEST_TEMPLATE.md # Шаблон проверки Pull Request
+├── app/                         # Исходный код сервиса «OptiPlan» (FastAPI + SQLAlchemy)
+├── tests/                       # Модульные тесты (pytest)
 ├── docs/
-│   └── 01-planning/
-│       ├── vision.md            # Видение и User Story Map
-│       ├── team-agreement.md    # Соглашение участников
-│       ├── process.md           # Scrumban, WIP-лимиты, DoR/DoD
-│       ├── estimates.md         # Planning Poker и 3 точки PERT
-│       ├── prioritization.md    # WSJF и Задача о рюкзаке
-│       └── release-plan.md      # Критический путь и Монте-Карло
+│   ├── 01-planning/             # Документация Этапа 1 (ЛР 1)
+│   └── 02-pipeline/             # Документация Этапа 2 (ЛР 2)
+│       ├── data/
+│       │   └── ci_timings.csv   # Замеры длительности запусков CI
+│       ├── branching.md         # Стратегия ветвления и правила ревью
+│       └── ci-optimization.md   # Отчёт об оптимизации конвейера
 ├── scripts/
-│   ├── release_planner.py       # Оптимизатор состава релиза
-│   ├── pert_cpm.py              # Расчет сетевого графика
-│   └── monte_carlo.py           # Статистический симулятор
-├── examples/
-|    └── data/
-│       ├── deployments.csv
-│       ├── issues.csv
-│       └── prs.csv
-│   ├── backlog.csv
-│   └── tasks.csv
+│   ├── release_planner.py       # Оптимизатор состава релиза (ЛР 1)
+│   ├── pert_cpm.py              # Расчет сетевого графика (ЛР 1)
+│   ├── monte_carlo.py           # Статистический симулятор (ЛР 1)
+│   └── analyze_ci.py            # Расчет медианных показателей CI (ЛР 2)
+├── Dockerfile                   # Многоэтапная сборка образа приложения
+├── docker-compose.yml           # Оркестрация сервиса и БД PostgreSQL
+├── pyproject.toml               # Конфигурация линтера и форматтера (Ruff)
+├── requirements.txt             # Зависимости Python
 └── README.md                    # Информационная карта проекта
+```
+
+---
+
+## Запуск сервиса и проверка воспроизводимости
+
+### 1. Запуск приложения в контейнерах (Этап 2)
+Для локального развёртывания сервиса «OptiPlan» и базы данных PostgreSQL выполните из корня репозитория:
+```bash
+docker compose up --build -d
+```
+Проверка состояния сервиса (Health Check):
+```bash
+curl http://localhost:8000/health
+```
+
+### 2. Локальный запуск линтера и тестов
+```bash
+pip install -r requirements.txt
+ruff check . && ruff format --check .
+pytest --cov=app
 ```
 
 ---
@@ -74,5 +99,4 @@
    python scripts/pert_cpm.py
    ```
 
----
-*Проект подготовлен к защите. Фиксация состояния произведена под тегом версии `lab1`.*
+---*Актуальное состояние проекта для сдачи Лабораторной работы № 2 зафиксировано под тегом версии `lab2` (предыдущий этап — под тегом `lab1`).*
