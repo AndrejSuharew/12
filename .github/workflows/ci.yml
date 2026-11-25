@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  pull_request:
+    paths-ignore:             # [ОПТ] не запускать CI при изменении только документации
+      - 'docs/**'
+      - '**.md'
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
+
+# [ОПТ] Отменять устаревшие запуски той же ветки
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:                       # [ОПТ] быстрые проверки — отдельным параллельным job
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip            # [ОПТ] кэш зависимостей
+      - run: pip install ruff
+      - run: ruff check . && ruff format --check .
+
+  test:                       # [ОПТ] параллельный job для модульных тестов
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: postgres:16
+        env:
+          POSTGRES_USER: optiplan
+          POSTGRES_PASSWORD: optiplan_secret
+          POSTGRES_DB: optiplan_db
+        ports: ["5432:5432"]
+        options: --health-cmd pg_isready --health-interval 5s --health-retries 10
+    env:
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_USER: optiplan
+      DB_PASSWORD: optiplan_secret
+      DB_NAME: optiplan_db
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip            # [ОПТ] кэш зависимостей
+      - run: pip install -r requirements.txt pytest-cov
+      - run: pytest --cov=app --cov-report=xml --cov-fail-under=70
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage.xml
+
+  build:
+    runs-on: ubuntu-latest
+    needs: [lint, test]       # критический путь: max(lint, test) + build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          cache-from: type=gha          # [ОПТ] кэш слоёв Docker
+          cache-to: type=gha,mode=max
